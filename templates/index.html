@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X 动态检查器</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #14171a;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      color: #444;
+    }
+
+    textarea {
+      width: 100%;
+      height: 110px;
+      padding: 12px;
+      border: 1.5px solid #e1e8ed;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: 'Courier New', monospace;
+      resize: vertical;
+      color: #14171a;
+      transition: border-color 0.2s;
+      line-height: 1.6;
+    }
+    textarea:focus { outline: none; border-color: #1d9bf0; }
+
+    .tip {
+      font-size: 0.8rem;
+      color: #8899a6;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      margin-top: 14px;
+      padding: 10px 28px;
+      background: #1d9bf0;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .btn:hover { background: #1a8cd8; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #657786;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Result card */
+    .result-username {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .result-username a {
+      color: #1d9bf0;
+      text-decoration: none;
+    }
+    .result-username a:hover { text-decoration: underline; }
+
+    .error-msg {
+      color: #e0245e;
+      font-size: 0.88rem;
+      background: #fff0f3;
+      border-left: 3px solid #e0245e;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .post-item {
+      background: #f7f9fa;
+      border-left: 3px solid #1d9bf0;
+      padding: 11px 14px;
+      margin: 8px 0;
+      border-radius: 0 10px 10px 0;
+    }
+    .post-item.pinned { border-left-color: #f4900c; }
+
+    .post-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #8899a6;
+      margin-bottom: 4px;
+    }
+    .post-label .pin-note {
+      color: #f4900c;
+      font-style: italic;
+    }
+
+    .post-date {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #14171a;
+    }
+
+    .post-ago {
+      display: inline-block;
+      background: #e8f5fd;
+      color: #1d9bf0;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin: 4px 0;
+    }
+    .post-item.pinned .post-ago { background: #fff3e0; color: #f4900c; }
+
+    .post-text {
+      font-size: 0.83rem;
+      color: #657786;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .post-link {
+      font-size: 0.78rem;
+      color: #1d9bf0;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 4px;
+    }
+    .post-link:hover { text-decoration: underline; }
+
+    .source-hint {
+      font-size: 0.73rem;
+      color: #bbb;
+      margin-top: 10px;
+    }
+
+    /* Loading overlay */
+    #loading {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #loading.active { display: flex; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 4px solid #e1e8ed;
+      border-top-color: #1d9bf0;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: #657786; font-size: 0.9rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">正在查询，请稍候...</div>
+</div>
+
+<div class="container">
+  <h1>&#128248; X 动态检查器</h1>
+
+  <div class="card">
+    <form method="post" id="checkForm">
+      <label for="urls">输入用户主页 URL（每行一个）</label>
+      <textarea
+        id="urls" name="urls"
+        placeholder="https://x.com/elonmusk&#10;https://twitter.com/OpenAI&#10;@someuser"
+      >{{ urls_text }}</textarea>
+      <p class="tip">
+        支持格式：<code>https://x.com/username</code>、<code>https://twitter.com/username</code>、<code>@username</code> 或纯用户名<br>
+        返回最新 2 条帖子的日期——第 1 条可能是置顶帖（日期偏旧），第 2 条更能反映真实更新时间
+      </p>
+      <button class="btn" type="submit" id="submitBtn">检查更新</button>
+    </form>
+  </div>
+
+  {% if results %}
+  <h2>检查结果</h2>
+
+  {% for r in results %}
+  <div class="card">
+    <div class="result-username">
+      {% if r.username %}
+        <a href="https://x.com/{{ r.username }}" target="_blank" rel="noopener">@{{ r.username }}</a>
+      {% else %}
+        {{ r.input }}
+      {% endif %}
+    </div>
+
+    {% if r.error %}
+      <div class="error-msg">{{ r.error }}</div>
+    {% else %}
+      {% for post in r.posts %}
+      <div class="post-item {% if loop.index == 1 %}pinned{% endif %}">
+        <div class="post-label">
+          帖子 {{ loop.index }}
+          {% if loop.index == 1 %}
+            &nbsp;<span class="pin-note">（可能是置顶，仅供参考）</span>
+          {% endif %}
+        </div>
+        <div class="post-date">{{ post.date }}</div>
+        {% if post.ago %}<span class="post-ago">{{ post.ago }}</span>{% endif %}
+        <div class="post-text" title="{{ post.title }}">{{ post.title }}</div>
+        {% if post.link %}
+          <a class="post-link" href="{{ post.link }}" target="_blank" rel="noopener">查看原帖 &rarr;</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <p class="source-hint">数据来源：{{ r.source }}</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<script>
+  document.getElementById('checkForm').addEventListener('submit', function () {
+    document.getElementById('loading').classList.add('active');
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '查询中...';
+  });
+</script>
+</body>
+</html>
