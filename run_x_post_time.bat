@@ -1,0 +1,1 @@
+start /b  pythonw  app.py
