@@ -5,7 +5,7 @@ import re
 import json
 from pathlib import Path
 from email.utils import parsedate_to_datetime
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 app = Flask(__name__)
@@ -69,10 +69,11 @@ def extract_username(text: str) -> str | None:
 def format_date(date_str: str) -> tuple[str, str]:
     """将 RFC 2822 日期格式化为可读字符串，并计算相对时间。"""
     try:
-        dt = parsedate_to_datetime(date_str).astimezone(timezone.utc)
-        now = datetime.now(timezone.utc)
+        tz_beijing = timezone(timedelta(hours=8))
+        dt = parsedate_to_datetime(date_str).astimezone(tz_beijing)
+        now = datetime.now(tz_beijing)
         delta = now - dt
-        formatted = dt.strftime('%Y-%m-%d %H:%M UTC')
+        formatted = dt.strftime('%Y-%m-%d %H:%M CST')
 
         if delta.days < 0:
             ago = '刚刚'
