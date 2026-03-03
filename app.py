@@ -124,6 +124,7 @@ def fetch_from_nitter(username: str) -> tuple[list | None, str | None]:
                     'ago': ago,
                     'title': entry.get('title', '')[:160],
                     'link': link,
+                    'raw_date': date_str,
                 })
             return posts, instance
         except Exception:
@@ -135,15 +136,28 @@ def check_single_user(raw_input: str) -> dict:
     username = extract_username(raw_input)
     if not username:
         return {'input': raw_input, 'username': None,
-                'error': '无法解析用户名，请检查输入格式', 'posts': []}
+                'error': '无法解析用户名，请检查输入格式', 'posts': [], 'sort_dt': None}
 
     posts, source = fetch_from_nitter(username)
     if posts:
+        two_posts = posts[:2]
+        # 计算排序用时间：取两条帖子中最近的那个
+        sort_dt = None
+        for post in two_posts:
+            try:
+                dt = parsedate_to_datetime(post['raw_date'])
+                if sort_dt is None or dt > sort_dt:
+                    sort_dt = dt
+            except Exception:
+                pass
+        # 清除临时字段
+        for post in two_posts:
+            post.pop('raw_date', None)
         return {'input': raw_input, 'username': username,
-                'error': None, 'posts': posts[:2], 'source': source}
+                'error': None, 'posts': two_posts, 'source': source, 'sort_dt': sort_dt}
     return {'input': raw_input, 'username': username,
             'error': '所有 Nitter 实例均请求失败，可能是账号不存在、已私有，或网络问题',
-            'posts': []}
+            'posts': [], 'sort_dt': None}
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -172,6 +186,12 @@ def index():
             idx = futures[future]
             ordered_results[idx] = future.result()
 
+    # 按每个用户最近帖子的时间排序，从新到旧；无法获取时间的排最后
+    _epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    ordered_results.sort(
+        key=lambda r: r.get('sort_dt') or _epoch,
+        reverse=True
+    )
     results = ordered_results
 
     return render_template('index.html', results=results, urls_text=urls_text)
