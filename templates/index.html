@@ -43,6 +43,10 @@
       color: #444;
     }
 
+    .textarea-wrapper {
+      position: relative;
+    }
+
     textarea {
       width: 100%;
       height: 110px;
@@ -57,6 +61,119 @@
       line-height: 1.6;
     }
     textarea:focus { outline: none; border-color: #1d9bf0; }
+
+    .fullscreen-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 28px;
+      height: 28px;
+      background: rgba(255,255,255,0.9);
+      border: 1.5px solid #e1e8ed;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #657786;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      z-index: 2;
+      line-height: 1;
+    }
+    .fullscreen-btn:hover { background: #e8f5fd; border-color: #1d9bf0; color: #1d9bf0; }
+
+    /* Fullscreen overlay */
+    #fullscreen-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #fullscreen-overlay.active { display: flex; }
+
+    #fullscreen-box {
+      background: #fff;
+      border-radius: 16px;
+      width: calc(100vw - 48px);
+      height: calc(100vh - 64px);
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+    }
+
+    #fullscreen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    #fullscreen-header span {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #444;
+    }
+    #fullscreen-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: #657786;
+      padding: 2px 6px;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+    #fullscreen-close:hover { background: #f0f2f5; color: #e0245e; }
+
+    #fullscreen-textarea {
+      flex: 1;
+      width: 100%;
+      padding: 14px;
+      border: 1.5px solid #e1e8ed;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: 'Courier New', monospace;
+      resize: none;
+      color: #14171a;
+      line-height: 1.7;
+    }
+    #fullscreen-textarea:focus { outline: none; border-color: #1d9bf0; }
+
+    #fullscreen-footer {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .fs-apply-btn {
+      padding: 8px 22px;
+      background: #1d9bf0;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .fs-apply-btn:hover { background: #1a8cd8; }
+    .fs-cancel-btn {
+      padding: 8px 22px;
+      background: #f0f2f5;
+      color: #444;
+      border: none;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .fs-cancel-btn:hover { background: #e1e8ed; }
 
     .tip {
       font-size: 0.8rem;
@@ -211,10 +328,13 @@
   <div class="card">
     <form method="post" id="checkForm">
       <label for="urls">输入用户主页 URL（每行一个）</label>
-      <textarea
-        id="urls" name="urls"
-        placeholder="https://x.com/elonmusk&#10;https://twitter.com/OpenAI&#10;@someuser"
-      >{{ urls_text }}</textarea>
+      <div class="textarea-wrapper">
+        <textarea
+          id="urls" name="urls"
+          placeholder="https://x.com/elonmusk&#10;https://twitter.com/OpenAI&#10;@someuser"
+        >{{ urls_text }}</textarea>
+        <button type="button" class="fullscreen-btn" id="openFullscreen" title="全屏编辑">⛶</button>
+      </div>
       <p class="tip">
         支持格式：<code>https://x.com/username</code>、<code>https://twitter.com/username</code>、<code>@username</code> 或纯用户名<br>
         返回最新 2 条帖子的日期——第 1 条可能是置顶帖（日期偏旧），第 2 条更能反映真实更新时间
@@ -262,12 +382,54 @@
   {% endif %}
 </div>
 
+<div id="fullscreen-overlay">
+  <div id="fullscreen-box">
+    <div id="fullscreen-header">
+      <span>全屏编辑 URL 列表</span>
+      <button id="fullscreen-close" title="关闭 (Esc)">✕</button>
+    </div>
+    <textarea id="fullscreen-textarea" placeholder="https://x.com/elonmusk&#10;https://twitter.com/OpenAI&#10;@someuser"></textarea>
+    <div id="fullscreen-footer">
+      <button class="fs-cancel-btn" id="fsCancel">取消</button>
+      <button class="fs-apply-btn" id="fsApply">确认</button>
+    </div>
+  </div>
+</div>
+
 <script>
   document.getElementById('checkForm').addEventListener('submit', function () {
     document.getElementById('loading').classList.add('active');
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.textContent = '查询中...';
+  });
+
+  const overlay = document.getElementById('fullscreen-overlay');
+  const fsTextarea = document.getElementById('fullscreen-textarea');
+  const mainTextarea = document.getElementById('urls');
+
+  function openFullscreen() {
+    fsTextarea.value = mainTextarea.value;
+    overlay.classList.add('active');
+    fsTextarea.focus();
+  }
+
+  function closeFullscreen(apply) {
+    if (apply) mainTextarea.value = fsTextarea.value;
+    overlay.classList.remove('active');
+  }
+
+  document.getElementById('openFullscreen').addEventListener('click', openFullscreen);
+  document.getElementById('fullscreen-close').addEventListener('click', function () { closeFullscreen(false); });
+  document.getElementById('fsCancel').addEventListener('click', function () { closeFullscreen(false); });
+  document.getElementById('fsApply').addEventListener('click', function () { closeFullscreen(true); });
+
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeFullscreen(false);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) closeFullscreen(false);
   });
 </script>
 </body>
