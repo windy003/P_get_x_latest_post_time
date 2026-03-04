@@ -100,8 +100,18 @@ def format_date(date_str: str) -> tuple[str, str]:
         return date_str, ''
 
 
-def fetch_from_nitter(username: str) -> tuple[list | None, str | None]:
-    """依次尝试各 Nitter 实例，返回最新帖子列表和成功的实例地址。"""
+def parse_display_name(feed_title: str, username: str) -> str:
+    """从 RSS 频道标题中提取博主显示名称。Nitter 标题格式通常为 "DisplayName / Nitter"。"""
+    if feed_title:
+        # 去掉 " / Nitter"、" / Twitter" 等后缀
+        name = re.sub(r'\s*/\s*(Nitter|Twitter|X).*$', '', feed_title, flags=re.IGNORECASE).strip()
+        if name and name.lower() != username.lower():
+            return name
+    return f'@{username}'
+
+
+def fetch_from_nitter(username: str) -> tuple[list | None, str | None, str | None]:
+    """依次尝试各 Nitter 实例，返回最新帖子列表、成功的实例地址和博主显示名称。"""
     headers = {'User-Agent': 'Mozilla/5.0 (compatible; RSS-Checker/1.0)'}
     for instance in NITTER_INSTANCES:
         try:
@@ -112,6 +122,8 @@ def fetch_from_nitter(username: str) -> tuple[list | None, str | None]:
             feed = feedparser.parse(resp.content)
             if not feed.entries:
                 continue
+
+            display_name = parse_display_name(feed.feed.get('title', ''), username)
 
             posts = []
             for entry in feed.entries[:3]:  # 多取一条，防止某条数据异常
@@ -126,10 +138,10 @@ def fetch_from_nitter(username: str) -> tuple[list | None, str | None]:
                     'link': link,
                     'raw_date': date_str,
                 })
-            return posts, instance
+            return posts, instance, display_name
         except Exception:
             continue
-    return None, None
+    return None, None, None
 
 
 def check_single_user(raw_input: str) -> dict:
@@ -138,7 +150,7 @@ def check_single_user(raw_input: str) -> dict:
         return {'input': raw_input, 'username': None,
                 'error': '无法解析用户名，请检查输入格式', 'posts': [], 'sort_dt': None}
 
-    posts, source = fetch_from_nitter(username)
+    posts, source, display_name = fetch_from_nitter(username)
     if posts:
         two_posts = posts[:2]
         # 计算排序用时间：取两条帖子中最近的那个
@@ -153,7 +165,7 @@ def check_single_user(raw_input: str) -> dict:
         # 清除临时字段
         for post in two_posts:
             post.pop('raw_date', None)
-        return {'input': raw_input, 'username': username,
+        return {'input': raw_input, 'username': username, 'display_name': display_name,
                 'error': None, 'posts': two_posts, 'source': source, 'sort_dt': sort_dt}
     return {'input': raw_input, 'username': username,
             'error': '所有 Nitter 实例均请求失败，可能是账号不存在、已私有，或网络问题',

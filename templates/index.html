@@ -350,7 +350,7 @@
   <div class="card">
     <div class="result-username">
       {% if r.username %}
-        <a href="https://x.com/{{ r.username }}" target="_blank" rel="noopener">@{{ r.username }}</a>
+        <a href="https://x.com/{{ r.username }}" target="_blank" rel="noopener">{{ r.display_name or ('@' + r.username) }}</a>
       {% else %}
         {{ r.input }}
       {% endif %}
