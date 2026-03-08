@@ -8,10 +8,62 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ===== 颜色变量：浅色模式 ===== */
+    :root {
+      --bg-page: #f0f2f5;
+      --bg-card: #fff;
+      --bg-post: #f7f9fa;
+      --bg-loading: rgba(255,255,255,0.7);
+      --color-text: #14171a;
+      --color-label: #444;
+      --color-muted: #657786;
+      --color-tip: #8899a6;
+      --color-source: #bbb;
+      --color-border: #e1e8ed;
+      --color-accent: #1d9bf0;
+      --color-accent-dark: #1a8cd8;
+      --color-pinned: #f4900c;
+      --bg-ago: #e8f5fd;
+      --bg-ago-pinned: #fff3e0;
+      --bg-error: #fff0f3;
+      --bg-cancel-btn: #f0f2f5;
+      --bg-cancel-btn-hover: #e1e8ed;
+      --bg-fullscreen-btn: rgba(255,255,255,0.9);
+      --shadow-card: 0 1px 4px rgba(0,0,0,0.08);
+      --shadow-fullscreen: 0 8px 40px rgba(0,0,0,0.22);
+    }
+
+    /* ===== 颜色变量：深色模式 ===== */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-page: #15202b;
+        --bg-card: #1e2732;
+        --bg-post: #253341;
+        --bg-loading: rgba(21,32,43,0.8);
+        --color-text: #e7e9ea;
+        --color-label: #c4cdd6;
+        --color-muted: #8b98a5;
+        --color-tip: #6e7f8d;
+        --color-source: #536471;
+        --color-border: #38444d;
+        --color-accent: #1d9bf0;
+        --color-accent-dark: #1a8cd8;
+        --color-pinned: #f4900c;
+        --bg-ago: #1e3a4f;
+        --bg-ago-pinned: #3d2800;
+        --bg-error: #3d0f1a;
+        --bg-cancel-btn: #253341;
+        --bg-cancel-btn-hover: #38444d;
+        --bg-fullscreen-btn: rgba(30,39,50,0.9);
+        --shadow-card: 0 1px 4px rgba(0,0,0,0.4);
+        --shadow-fullscreen: 0 8px 40px rgba(0,0,0,0.6);
+      }
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f0f2f5;
-      color: #14171a;
+      background: var(--bg-page);
+      color: var(--color-text);
       min-height: 100vh;
       padding: 32px 16px;
     }
@@ -28,11 +80,11 @@
     }
 
     .card {
-      background: #fff;
+      background: var(--bg-card);
       border-radius: 16px;
       padding: 24px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow: var(--shadow-card);
     }
 
     label {
@@ -40,7 +92,7 @@
       font-weight: 600;
       font-size: 0.95rem;
       margin-bottom: 10px;
-      color: #444;
+      color: var(--color-label);
     }
 
     .textarea-wrapper {
@@ -51,16 +103,17 @@
       width: 100%;
       height: 110px;
       padding: 12px;
-      border: 1.5px solid #e1e8ed;
+      border: 1.5px solid var(--color-border);
       border-radius: 10px;
       font-size: 0.9rem;
       font-family: 'Courier New', monospace;
       resize: vertical;
-      color: #14171a;
+      color: var(--color-text);
+      background: var(--bg-card);
       transition: border-color 0.2s;
       line-height: 1.6;
     }
-    textarea:focus { outline: none; border-color: #1d9bf0; }
+    textarea:focus { outline: none; border-color: var(--color-accent); }
 
     .fullscreen-btn {
       position: absolute;
@@ -68,20 +121,20 @@
       right: 6px;
       width: 28px;
       height: 28px;
-      background: rgba(255,255,255,0.9);
-      border: 1.5px solid #e1e8ed;
+      background: var(--bg-fullscreen-btn);
+      border: 1.5px solid var(--color-border);
       border-radius: 6px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 14px;
-      color: #657786;
+      color: var(--color-muted);
       transition: background 0.2s, color 0.2s, border-color 0.2s;
       z-index: 2;
       line-height: 1;
     }
-    .fullscreen-btn:hover { background: #e8f5fd; border-color: #1d9bf0; color: #1d9bf0; }
+    .fullscreen-btn:hover { background: var(--bg-ago); border-color: var(--color-accent); color: var(--color-accent); }
 
     /* Fullscreen overlay */
     #fullscreen-overlay {
@@ -96,7 +149,7 @@
     #fullscreen-overlay.active { display: flex; }
 
     #fullscreen-box {
-      background: #fff;
+      background: var(--bg-card);
       border-radius: 16px;
       width: calc(100vw - 48px);
       height: calc(100vh - 64px);
@@ -104,7 +157,7 @@
       display: flex;
       flex-direction: column;
       padding: 20px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+      box-shadow: var(--shadow-fullscreen);
     }
 
     #fullscreen-header {
@@ -116,33 +169,34 @@
     #fullscreen-header span {
       font-weight: 600;
       font-size: 0.95rem;
-      color: #444;
+      color: var(--color-label);
     }
     #fullscreen-close {
       background: none;
       border: none;
       cursor: pointer;
       font-size: 20px;
-      color: #657786;
+      color: var(--color-muted);
       padding: 2px 6px;
       border-radius: 6px;
       transition: background 0.2s, color 0.2s;
     }
-    #fullscreen-close:hover { background: #f0f2f5; color: #e0245e; }
+    #fullscreen-close:hover { background: var(--bg-cancel-btn-hover); color: #e0245e; }
 
     #fullscreen-textarea {
       flex: 1;
       width: 100%;
       padding: 14px;
-      border: 1.5px solid #e1e8ed;
+      border: 1.5px solid var(--color-border);
       border-radius: 10px;
       font-size: 1rem;
       font-family: 'Courier New', monospace;
       resize: none;
-      color: #14171a;
+      color: var(--color-text);
+      background: var(--bg-card);
       line-height: 1.7;
     }
-    #fullscreen-textarea:focus { outline: none; border-color: #1d9bf0; }
+    #fullscreen-textarea:focus { outline: none; border-color: var(--color-accent); }
 
     #fullscreen-footer {
       margin-top: 12px;
@@ -152,7 +206,7 @@
     }
     .fs-apply-btn {
       padding: 8px 22px;
-      background: #1d9bf0;
+      background: var(--color-accent);
       color: #fff;
       border: none;
       border-radius: 999px;
@@ -161,11 +215,11 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .fs-apply-btn:hover { background: #1a8cd8; }
+    .fs-apply-btn:hover { background: var(--color-accent-dark); }
     .fs-cancel-btn {
       padding: 8px 22px;
-      background: #f0f2f5;
-      color: #444;
+      background: var(--bg-cancel-btn);
+      color: var(--color-label);
       border: none;
       border-radius: 999px;
       font-size: 0.9rem;
@@ -173,11 +227,11 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .fs-cancel-btn:hover { background: #e1e8ed; }
+    .fs-cancel-btn:hover { background: var(--bg-cancel-btn-hover); }
 
     .tip {
       font-size: 0.8rem;
-      color: #8899a6;
+      color: var(--color-tip);
       margin-top: 8px;
       line-height: 1.5;
     }
@@ -185,7 +239,7 @@
     .btn {
       margin-top: 14px;
       padding: 10px 28px;
-      background: #1d9bf0;
+      background: var(--color-accent);
       color: #fff;
       border: none;
       border-radius: 999px;
@@ -194,13 +248,13 @@
       cursor: pointer;
       transition: background 0.2s, opacity 0.2s;
     }
-    .btn:hover { background: #1a8cd8; }
+    .btn:hover { background: var(--color-accent-dark); }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     h2 {
       font-size: 1rem;
       font-weight: 600;
-      color: #657786;
+      color: var(--color-muted);
       margin-bottom: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -213,7 +267,7 @@
       margin-bottom: 12px;
     }
     .result-username a {
-      color: #1d9bf0;
+      color: var(--color-accent);
       text-decoration: none;
     }
     .result-username a:hover { text-decoration: underline; }
@@ -221,55 +275,55 @@
     .error-msg {
       color: #e0245e;
       font-size: 0.88rem;
-      background: #fff0f3;
+      background: var(--bg-error);
       border-left: 3px solid #e0245e;
       padding: 10px 14px;
       border-radius: 0 8px 8px 0;
     }
 
     .post-item {
-      background: #f7f9fa;
-      border-left: 3px solid #1d9bf0;
+      background: var(--bg-post);
+      border-left: 3px solid var(--color-accent);
       padding: 11px 14px;
       margin: 8px 0;
       border-radius: 0 10px 10px 0;
     }
-    .post-item.pinned { border-left-color: #f4900c; }
+    .post-item.pinned { border-left-color: var(--color-pinned); }
 
     .post-label {
       font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.4px;
-      color: #8899a6;
+      color: var(--color-tip);
       margin-bottom: 4px;
     }
     .post-label .pin-note {
-      color: #f4900c;
+      color: var(--color-pinned);
       font-style: italic;
     }
 
     .post-date {
       font-size: 0.95rem;
       font-weight: 700;
-      color: #14171a;
+      color: var(--color-text);
     }
 
     .post-ago {
       display: inline-block;
-      background: #e8f5fd;
-      color: #1d9bf0;
+      background: var(--bg-ago);
+      color: var(--color-accent);
       padding: 2px 9px;
       border-radius: 999px;
       font-size: 0.78rem;
       font-weight: 700;
       margin: 4px 0;
     }
-    .post-item.pinned .post-ago { background: #fff3e0; color: #f4900c; }
+    .post-item.pinned .post-ago { background: var(--bg-ago-pinned); color: var(--color-pinned); }
 
     .post-text {
       font-size: 0.83rem;
-      color: #657786;
+      color: var(--color-muted);
       margin-top: 4px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -278,7 +332,7 @@
 
     .post-link {
       font-size: 0.78rem;
-      color: #1d9bf0;
+      color: var(--color-accent);
       text-decoration: none;
       display: inline-block;
       margin-top: 4px;
@@ -287,7 +341,7 @@
 
     .source-hint {
       font-size: 0.73rem;
-      color: #bbb;
+      color: var(--color-source);
       margin-top: 10px;
     }
 
@@ -296,7 +350,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(255,255,255,0.7);
+      background: var(--bg-loading);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -306,13 +360,13 @@
     #loading.active { display: flex; }
     .spinner {
       width: 36px; height: 36px;
-      border: 4px solid #e1e8ed;
-      border-top-color: #1d9bf0;
+      border: 4px solid var(--color-border);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { color: #657786; font-size: 0.9rem; font-weight: 600; }
+    .loading-text { color: var(--color-muted); font-size: 0.9rem; font-weight: 600; }
   </style>
 </head>
 <body>
